@@ -1,17 +1,24 @@
+import torch 
 from torch.utils.data import Dataset, DataLoader
 
 class CustomDataset(Dataset):
-    def __init__(self, data, labels):
+    def __init__(self, data, labels, transforms = None):
         self.data = data
         self.labels = labels
+        self.transforms = transforms
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, index):
-        if self.labels is not None:
-            return self.data[index], self.labels[index]
-        else:
-            return self.data[index]
+        sample = self.data[index]
+        label = self.labels[index]
+
+        if self.transforms:
+            sample = self.transforms(sample)
+
+        return sample, label
+
+      
         
 

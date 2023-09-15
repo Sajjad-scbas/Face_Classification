@@ -24,7 +24,7 @@ from einops import rearrange
 def window_partition(x, window_size):
     """
     Args:
-        x: (B, D, H, W, C)
+        x: (B, H, W, C)
         window_size (tuple[int]): window size
 
     Returns:
@@ -44,7 +44,7 @@ def window_reverse(windows, window_size, B, H, W):
         W (int): Width of image
 
     Returns:
-        x: (B, D, H, W, C)
+        x: (B, H, W, C)
     """
     x = rearrange(windows, '(b nw_h nw_w) w_h w_w c -> b (nw_h w_h) (nw_w w_w) c',
                   nw_w = H // window_size[0], nw_h = W // window_size[1])
@@ -119,7 +119,6 @@ def create_mask_attention(window_size, displacement, n_h, n_w):
     attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
     attn_mask = attn_mask.masked_fill(attn_mask != 0, float('-inf')).masked_fill(attn_mask == 0, float(0.0))
     return attn_mask
-
 
 
 
@@ -203,9 +202,6 @@ class WindowAttention(nn.Module):
         b, n_h, _, _ = x.shape
         x = window_partition(x, self.window_size)
         B_, N, C = x.shape
-        
-        
-        
         
         qkv = self.to_qkv(x).reshape(B_, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4) # q shape (1860, 3, 144, 32)
         q, k, v = qkv[0], qkv[1], qkv[2]  # B_, nH, N, 
@@ -370,17 +366,6 @@ class Up_Sampling(nn.Module):
 
 
 class PatchEmbedding(nn.Module):
-    """
-    A class that performs the Patch Embedding explained in the Pangu-Weather paper https://arxiv.org/pdf/2211.02556.pdf 
-    and merges the two sources of input: surface data and upper data
-
-    data_size : (tuple) the spacial size of the data 
-    hidden_emb : (int) the dimension of the latent space = C (in the paper)
-    chan_surface : (int) the number of variables of surface source
-    chan_upper : (int) the number of variables of upper-air source
-    kernel_size_surf : (tuple) the patch size for the upper-air source
-    """
-
     def __init__(self, parameters):
         super(PatchEmbedding, self).__init__()
         self.data_size = parameters['data_size']
@@ -476,7 +461,6 @@ class SwinTransformer(nn.Module):
                 
         self.avgpool = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Linear(parameters['hidden_emb'], parameters['nb_classes'])
-        self.softmax = nn.Softmax(dim=-1)
         
     
 
@@ -506,13 +490,8 @@ class SwinTransformer(nn.Module):
         x = torch.flatten(x, 1)
         x = self.head(x)
         
-        return self.softmax(x)
+        return x
       
-        
-        
-
-   
-
 
 if __name__== '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -543,7 +522,5 @@ if __name__== '__main__':
 
     model = SwinTransformer(parameters).to(device=device, dtype=torch.float32)
     x = model(x)
-    
-    
     print('ddddd')
     

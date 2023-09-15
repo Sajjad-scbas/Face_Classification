@@ -1,0 +1,1 @@
+paste label_test.txt prediction.txt | awk '{h[$1]++;if ($1!=$2) err[$1]++;} END {hter= 0.5*(err[1]/h[1]+err[0]/h[0]) ;print "erreur classe 0 : ",err[0],"sur",h[0],"  erreur classe 1 :",err[1],"sur",h[1],"   note :",100.0-200.0*hter;}'

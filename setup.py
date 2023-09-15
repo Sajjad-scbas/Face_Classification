@@ -18,7 +18,9 @@ setup(
         'matplotlib',
         'scikit-learn',
         'tqdm',
-        'torch'
-
+        'torch', 
+        'timm',
+        'einops',
+        'tensorboard'
     ],
 )
